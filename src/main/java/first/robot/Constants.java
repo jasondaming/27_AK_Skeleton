@@ -12,10 +12,11 @@ import org.wpilib.framework.RobotBase;
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
  * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
- * (log replay from a file).
+ * (log replay from a file). The JVM property {@code frc.replay=true} (used by the {@code replayLog}
+ * Gradle task) selects replay without editing this file; the default stays "sim".
  */
 public final class Constants {
-  public static final Mode simMode = Mode.SIM;
+  public static final Mode simMode = Boolean.getBoolean("frc.replay") ? Mode.REPLAY : Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
   /** Reported in the Test Hub configuration snapshot; set true when tuning values live. */

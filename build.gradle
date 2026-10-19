@@ -112,6 +112,31 @@ deployArtifact.configureApplication(application)
 wpi.java.configureApplication(application)
 wpi.java.configureTestTasks(test)
 
+// Headless AdvantageKit replay of one log (no simulator GUI), used by the Test Hub's
+// tools/replay_regression.py. Writes <log>_sim.wpilog beside the input.
+// ./gradlew replayLog -PreplayLog=C:\path\to\log.wpilog
+tasks.register('replayLog', JavaExec) {
+    group = 'Simulation'
+    description = 'Replay one WPILOG through this robot code (AdvantageKit REPLAY mode, no GUI).'
+    dependsOn classes, tasks.named('extractReleaseNative')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = ROBOT_MAIN_CLASS
+    jvmArgs '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang=ALL-UNNAMED',
+            '--enable-native-access=ALL-UNNAMED'
+    systemProperty 'frc.replay', 'true'
+    doFirst {
+        if (!project.hasProperty('replayLog')) {
+            throw new GradleException('Pass -PreplayLog=<absolute path of a .wpilog>')
+        }
+        def nativeDir = layout.buildDirectory.dir('jni/release').get().asFile
+        systemProperty 'java.library.path', nativeDir.absolutePath
+        environment 'PATH', nativeDir.absolutePath + File.pathSeparator + System.getenv('PATH')
+        environment 'AKIT_LOG_PATH', file(project.property('replayLog')).absolutePath
+        environment 'HALSIM_EXTENSIONS', ''
+    }
+}
+
 jar {
     from('src') { into 'backup/src' }
     from('vendordeps') { into 'backup/vendordeps' }
